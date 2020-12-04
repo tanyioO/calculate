@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>盈球计划</title>
+    <script src="./source/js/react.development.js"></script>
+    <script src="./source/js//react-dom.development.js"></script>
+    <script src="./source/js//babel.min.js"></script>
+    <script src="./source/js//antd.min.js"></script>
+    <link href="./source/css/antd.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 16px 15%;
+            background-color: #f0f8fb;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script type="text/babel">
+        class MessageBox extends React.Component {
+            state = {
+                activeKey: '1',
+                dayDataSource: [],
+                roundDataSource: []
+            }
+
+            calculate = (num, odd, profit, type) => {
+                const details = []
+                let totalBet = 0
+                for (let i = 0; i < num; i += 1) {
+                    let bet = Math.ceil((totalBet + (type === 'day' ? (i + 1) * profit : profit)) / (odd - 1))
+                    if ((bet / 2) % 1 !== 0) { bet = bet + 1 }
+                    totalBet += bet
+                    details.push({
+                        'num': i + 1,
+                        'bet': bet,
+                        'totalBet': totalBet,
+                        'winning': Math.round((bet * odd) * 100) / 100,
+                        'profit': Math.round((bet * odd - totalBet) * 100) / 100
+                    })
+                }
+                return details
+            }
+
+            onFinish = (data, type = 'day') => {
+                const { num, odd, profit } = data
+                const { message } = antd
+                if (num && odd && profit) {
+                    this.setState({ [type === 'day' ? 'dayDataSource' : 'roundDataSource']: this.calculate(num, odd, profit, type) })
+                } else {
+                    message.error('计算参数未填写完整')
+                    this.setState({ [type === 'day' ? 'dayDataSource' : 'roundDataSource']: [] })
+                }
+
+            }
+
+            render = () => {
+                const { Tabs, Row, Form, Table, InputNumber, Button } = antd
+                const { TabPane } = Tabs
+                const { activeKey, dayDataSource, roundDataSource } = this.state
+                const columns = [
+                    { key: 'num', dataIndex: 'num', title: '期数', align: 'center', width: '20%' },
+                    { key: 'bet', dataIndex: 'bet', title: '理论投注', align: 'center', width: '20%' },
+                    { key: 'totalBet', dataIndex: 'totalBet', title: '累计投注', align: 'center', width: '20%' },
+                    { key: 'winning', dataIndex: 'winning', title: '中奖金额', align: 'center', width: '20%' },
+                    { key: 'profit', dataIndex: 'profit', title: '理论盈利', align: 'center', width: '20%' }
+                ]
+                return (
+                    <Tabs centered size="large" activeKey={activeKey} onChange={(key) => this.setState({ activeKey: key, dataSource: [] })}>
+                        <TabPane tab="天利" key="1">
+                            <Row style={{ margin: "24px 0" }}>
+                                <Form name="basic" layout="inline" onFinish={this.onFinish}>
+                                    <Form.Item label="期数" name="num" initialValue={20}>
+                                        <InputNumber min={1} precision={0} />
+                                    </Form.Item>
+                                    <Form.Item label="赔率" name="odd" initialValue={5}>
+                                        <InputNumber min={0} />
+                                    </Form.Item>
+                                    <Form.Item label="利润" name="profit">
+                                        <InputNumber min={10} precision={0} />
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Button type="primary" htmlType="submit">计算</Button>
+                                    </Form.Item>
+                                </Form>
+                            </Row>
+                            <Row style={{ marginTop: 40 }}>
+                                <Table
+                                    style={{ width: "100%" }}
+                                    columns={columns}
+                                    dataSource={dayDataSource}
+                                    size="small"
+                                    pagination={{ showSizeChanger: false }} />
+                            </Row>
+                        </TabPane>
+                        <TabPane tab="轮利" key="2">
+                            <Row style={{ margin: "24px 0" }}>
+                                <Form name="basic" layout="inline" onFinish={(data) => this.onFinish(data, 'round')}>
+                                    <Form.Item label="期数" name="num" initialValue={20}>
+                                        <InputNumber min={1} precision={0} />
+                                    </Form.Item>
+                                    <Form.Item label="赔率" name="odd" initialValue={5}>
+                                        <InputNumber min={0} />
+                                    </Form.Item>
+                                    <Form.Item label="利润" name="profit">
+                                        <InputNumber min={10} precision={0} />
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Button type="primary" htmlType="submit">计算</Button>
+                                    </Form.Item>
+                                </Form>
+                            </Row>
+                            <Row style={{ marginTop: 40 }}>
+                                <Table
+                                    style={{ width: "100%" }}
+                                    columns={columns}
+                                    dataSource={roundDataSource}
+                                    size="small"
+                                    pagination={{ showSizeChanger: false }} />
+                            </Row>
+                        </TabPane>
+                    </Tabs>
+                )
+            }
+        };
+        ReactDOM.render(<MessageBox />, document.getElementById('app'));
+    </script>
+</body>
+
+</html>
